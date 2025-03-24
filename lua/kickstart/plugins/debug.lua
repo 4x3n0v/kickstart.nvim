@@ -136,12 +136,28 @@ return {
     dap.listeners.before.event_terminated['dapui_config'] = dapui.close
     dap.listeners.before.event_exited['dapui_config'] = dapui.close
 
-    -- Install golang specific config
-    require('dap-go').setup {
-      delve = {
-        -- On Windows delve must be run attached or it crashes.
-        -- See https://github.com/leoluz/nvim-dap-go/blob/main/README.md#configuring
-        detached = vim.fn.has 'win32' == 0,
+    -- check absolute parth for command on each machine
+    -- TODO ?: auto user name?
+    dap.adapters.cppdbg = {
+      id = 'cppdbg',
+      type = 'executable',
+      command = 'C:/Users/Oleg/.vscode/extensions/ms-vscode.cpptools-1.23.6-win32-x64/debugAdapters/bin/OpenDebugAD7.exe',
+      options = {
+        detached = false,
+      },
+    }
+
+    dap.configurations.rust = {
+      {
+        type = 'cppdbg',
+        request = 'launch',
+        name = 'Debug rust',
+        program = function()
+          vim.fn.jobstart 'cargo build'
+          return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/target/debug/', 'file')
+        end,
+        cwd = '${workspaceFolder}',
+        stopOnEntry = true,
       },
     }
   end,
