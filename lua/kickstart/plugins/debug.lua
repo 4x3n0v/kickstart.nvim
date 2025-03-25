@@ -141,7 +141,7 @@ return {
     dap.adapters.cppdbg = {
       id = 'cppdbg',
       type = 'executable',
-      command = 'C:/Users/Oleg/.vscode/extensions/ms-vscode.cpptools-1.23.6-win32-x64/debugAdapters/bin/OpenDebugAD7.exe',
+      command = 'C:/Users/oaksenov/.vscode/extensions/ms-vscode.cpptools-1.23.6-win32-x64/debugAdapters/bin/OpenDebugAD7.exe',
       options = {
         detached = false,
       },
