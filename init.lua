@@ -783,6 +783,12 @@ require('lazy').setup({
         },
       }
 
+      ---@diagnostic disable-next-line: missing-fields
+      require('rose-pine').setup {
+        variant = 'main',
+        dim_inactive_windows = true,
+      }
+
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
