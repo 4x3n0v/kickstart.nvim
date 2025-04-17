@@ -22,7 +22,6 @@ return {
     'jay-babu/mason-nvim-dap.nvim',
 
     -- Add your own debuggers here
-    'leoluz/nvim-dap-go',
   },
   keys = {
     -- Basic debugging keymaps, feel free to change to your liking!
@@ -94,7 +93,7 @@ return {
       -- online, please don't ask me how to install them :)
       ensure_installed = {
         -- Update this to ensure that you have the debuggers for the langs you want
-        'delve',
+        'codelldb',
       },
     }
 
@@ -136,6 +135,14 @@ return {
     dap.listeners.before.event_terminated['dapui_config'] = dapui.close
     dap.listeners.before.event_exited['dapui_config'] = dapui.close
 
+    -- actually downloading debugger via mason solves the problem of path
+    local mason_registry = require 'mason-registry'
+
+    local codelldb = mason_registry.get_package 'codelldb'
+    local extension_path = codelldb:get_install_path() .. '/extension/'
+    local codelldb_path = extension_path .. 'adapter/codelldb'
+    local liblldb_path = extension_path .. 'lldb/lib/liblldb.dylib'
+
     -- check absolute parth for command on each machine
     -- TODO ?: auto user name?
     dap.adapters.cppdbg = {
@@ -147,24 +154,27 @@ return {
       },
     }
 
+    dap.adapters.lldb = {
+      type = 'server',
+      port = '${port}',
+      executable = {
+        command = codelldb_path,
+        args = { '--port', '${port}' },
+        detached = false,
+      },
+    }
+
     dap.configurations.rust = {
       {
-        type = 'cppdbg',
-        request = 'launch',
         name = 'Debug rust',
+        type = 'lldb',
+        request = 'launch',
         program = function()
           vim.fn.jobstart 'cargo build'
           return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/target/debug/', 'file')
         end,
         cwd = '${workspaceFolder}',
-        stopOnEntry = true,
-        setupCommands = {
-          {
-            text = '-enable-pretty-printing',
-            description = 'enable pretty printing',
-            ignoreFailures = false,
-          },
-        },
+        stopOnEntry = false,
       },
     }
   end,
