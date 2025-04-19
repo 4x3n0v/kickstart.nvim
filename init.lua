@@ -793,6 +793,9 @@ require('lazy').setup({
       require('rose-pine').setup {
         variant = 'main',
         dim_inactive_windows = true,
+        styles = {
+          transparency = true,
+        },
       }
 
       -- Load the colorscheme here.
