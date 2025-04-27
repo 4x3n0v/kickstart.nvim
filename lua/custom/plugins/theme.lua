@@ -13,6 +13,10 @@ return {
           bold = true,
           italic = false,
         },
+        highlight_groups = {
+          StatusLine = { fg = 'love', bg = 'love', blend = 10 },
+          StatusLineNC = { fg = 'subtle', bg = 'surface' },
+        },
       }
       vim.cmd 'colorscheme rose-pine-main'
     end,
