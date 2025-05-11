@@ -21,10 +21,16 @@ return {
       vim.cmd 'colorscheme rose-pine-main'
     end,
   },
-  -- {
-  --   'rebelot/kanagawa.nvim',
-  --   config = function()
-  --     vim.cmd 'colorscheme kanagawa'
-  --   end,
-  -- },
+  {
+    'rebelot/kanagawa.nvim',
+    config = function()
+      require('kanagawa').setup {
+        commentStyle = { italic = false },
+        functionStyle = {},
+        keywordStyle = { italic = false },
+        statementStyle = { bold = true },
+      }
+      -- vim.cmd 'colorscheme kanagawa'
+    end,
+  },
 }
