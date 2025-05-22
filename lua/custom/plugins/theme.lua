@@ -9,7 +9,7 @@ return {
         variant = 'main',
         dim_inactive_windows = true,
         styles = {
-          transparency = true,
+          transparency = false,
           bold = true,
           italic = false,
         },
