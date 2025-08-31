@@ -141,20 +141,11 @@ return {
     dap.listeners.before.event_terminated['dapui_config'] = dapui.close
     dap.listeners.before.event_exited['dapui_config'] = dapui.close
 
-    -- actually downloading debugger via mason solves the problem of path
-    local mason_registry = require 'mason-registry'
-
-    local codelldb = mason_registry.get_package 'codelldb'
-    local extension_path = codelldb:get_install_path() .. '/extension/'
-    local codelldb_path = extension_path .. 'adapter/codelldb'
-    local liblldb_path = extension_path .. 'lldb/lib/liblldb.dylib'
-
     -- check absolute parth for command on each machine
-    -- TODO ?: auto user name?
     dap.adapters.cppdbg = {
       id = 'cppdbg',
       type = 'executable',
-      command = mason_registry.get_package('cpptools'):get_install_path() .. '/extension/debugAdapters/bin/OpenDebugAD7',
+      command = vim.fn.exepath 'OpenDebugAD7',
       options = {
         detached = false,
       },
@@ -164,7 +155,7 @@ return {
       type = 'server',
       port = '${port}',
       executable = {
-        command = codelldb_path,
+        command = vim.fn.exepath 'codelldb',
         args = { '--port', '${port}' },
         detached = false,
       },
