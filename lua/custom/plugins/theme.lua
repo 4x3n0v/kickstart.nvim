@@ -18,7 +18,7 @@ return {
           StatusLineNC = { fg = 'subtle', bg = 'surface' },
         },
       }
-      vim.cmd 'colorscheme rose-pine-main'
+      -- vim.cmd 'colorscheme rose-pine-main'
     end,
   },
   {
@@ -31,6 +31,13 @@ return {
         statementStyle = { bold = true },
       }
       -- vim.cmd 'colorscheme kanagawa'
+    end,
+  },
+  {
+    'ramojus/mellifluous.nvim',
+    config = function()
+      require('mellifluous').setup {}
+      vim.cmd 'colorscheme mellifluous'
     end,
   },
 }
