@@ -36,8 +36,22 @@ return {
   {
     'ramojus/mellifluous.nvim',
     config = function()
-      require('mellifluous').setup {}
-      vim.cmd 'colorscheme mellifluous'
+      require('mellifluous').setup {
+        variant = 'kanagawa_dragon',
+      }
+      -- vim.cmd 'colorscheme mellifluous'
+    end,
+  },
+  {
+    'webhooked/kanso.nvim',
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require('kanso').setup {
+        bold = true,
+        italics = false,
+      }
+      vim.cmd 'colorscheme kanso'
     end,
   },
 }
