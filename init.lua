@@ -565,6 +565,11 @@ require('lazy').setup({
         cmake = {},
         -- gopls = {},
         pyright = {},
+        tinymist = {
+          settings = {
+            formatterMode = 'typstyle',
+          },
+        },
         rust_analyzer = {
           settings = {
             cargo = {
