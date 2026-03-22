@@ -577,6 +577,11 @@ require('lazy').setup({
             },
           },
         },
+        texlab = {
+          -- I set this because don't want to format on save and apparently there is no
+          -- way to turn it off
+          latexFormatter = 'texlab',
+        },
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
