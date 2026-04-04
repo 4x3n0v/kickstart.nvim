@@ -107,10 +107,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 -- PLUGINS
 
 vim.pack.add {
-  { src = 'https://github.com/webhooked/kanso.nvim' },
   { src = 'https://github.com/neovim/nvim-lspconfig' },
-  { src = 'https://github.com/mason-org/mason.nvim' },
-  { src = 'https://github.com/mason-org/mason-lspconfig.nvim' },
   { src = 'https://github.com/mfussenegger/nvim-lint' },
   { src = 'https://github.com/stevearc/conform.nvim' },
 
@@ -139,23 +136,58 @@ vim.pack.add {
   { src = 'https://github.com/folke/which-key.nvim' },
 }
 
-require('kanso').setup {
-  bold = true,
-  italics = false,
-}
-vim.cmd 'colorscheme kanso'
-
-require('mason').setup {}
-require('mason-lspconfig').setup {}
-require('mason-tool-installer').setup {
-  ensure_installed = {
-    'lua_ls',
-    'stylua',
-    'rust_analyzer',
-    'clangd',
-    'pyright',
+local plugins = {
+  {
+    src = 'https://github.com/webhooked/kanso.nvim',
+    setup = function()
+      require('kanso').setup {
+        bold = true,
+        italics = false,
+      }
+      vim.cmd 'colorscheme kanso'
+    end,
   },
+  {
+    src = 'https://github.com/mason-org/mason.nvim',
+    setup = function()
+      require('mason').setup {}
+    end,
+  },
+  {
+    src = 'https://github.com/mason-org/mason-lspconfig.nvim',
+    setup = function()
+      require('mason-lspconfig').setup {}
+    end,
+  },
+  {
+    src = 'https://github.com/mason-org/mason-tool-installer.nvim',
+    setup = function()
+      require('mason-tool-installer').setup {
+        ensure_installed = {
+          'lua_ls',
+          'stylua',
+          'rust_analyzer',
+          'clangd',
+          'pyright',
+        },
+      }
+    end,
+  }
 }
+
+vim.pack.add(vim.tbl_map(
+  function(plugin)
+    return {
+      src = plugin.src,
+      version = plugin.version,
+      build = plugin.build,
+      name = plugin.name,
+    }
+  end, plugins))
+
+for _, plugin in ipairs(plugins) do
+  _ = plugin.setup and plugin.setup()
+end
 
 require('conform').setup {
   format_on_save = {
@@ -199,7 +231,7 @@ local builtin = require 'telescope.builtin'
 vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = 'Telescope find files' })
 vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = 'Telescope live grep' })
 vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
+vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ( for repeat)' })
 vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
 vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Telescope help tags' })
 vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
