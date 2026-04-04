@@ -107,18 +107,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 -- PLUGINS
 
 vim.pack.add {
-  { src = 'https://github.com/neovim/nvim-lspconfig' },
-  { src = 'https://github.com/mfussenegger/nvim-lint' },
-  { src = 'https://github.com/stevearc/conform.nvim' },
-
-  { src = 'https://github.com/nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
-  { src = 'https://github.com/nvim-treesitter/nvim-treesitter-context' },
-  { src = 'https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim' },
-
-  { src = 'https://github.com/nvim-lua/plenary.nvim' },
-  { src = 'https://github.com/hrsh7th/nvim-cmp' },
-  { src = 'https://github.com/windwp/nvim-autopairs' },
-  { src = 'https://github.com/nvim-telescope/telescope.nvim' },
   {
     src = 'https://github.com/nvim-telescope/telescope-fzf-native.nvim',
     build = 'make',
@@ -129,6 +117,7 @@ vim.pack.add {
   { src = 'https://github.com/nvim-telescope/telescope-file-browser.nvim' },
   { src = 'https://github.com/nvim-telescope/telescope-live-grep-args.nvim', tag = '>1.0.0' },
 
+  { src = 'https://github.com/windwp/nvim-autopairs' },
   { src = 'https://github.com/nvim-mini/mini.nvim' },
   { src = 'https://github.com/nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
   { src = 'https://github.com/tpope/vim-sleuth' },
@@ -171,123 +160,223 @@ local plugins = {
           'pyright',
         },
       }
+      vim.keymap.set('n', '<leader>o', '<cmd>LspClangdSwitchSourceHeader<CR>', { desc = 'Switch between header/source for cpp' })
     end,
-  }
+  },
+  {
+    src = 'https://github.com/j-hui/fidget.nvim',
+  },
+  {
+    src = 'https://github.com/hrsh7th/cmp-nvim-lsp',
+  },
+  {
+    src = 'https://github.com/saadparwaiz1/cmp_luasnip',
+  },
+  {
+    src = 'https://github.com/L3MON4D3/LuaSnip',
+    build = (function()
+      -- Build Step is needed for regex support in snippets.
+      -- This step is not supported in many windows environments.
+      -- Remove the below condition to re-enable on windows.
+      if vim.fn.has 'win32' == 1 or vim.fn.executable 'make' == 0 then
+        return
+      end
+      return 'make install_jsregexp'
+    end)(),
+  },
+  { src = 'https://github.com/hrsh7th/cmp-nvim-lsp' },
+  { src = 'https://github.com/hrsh7th/cmp-path' },
+  { src = 'https://github.com/hrsh7th/cmp-nvim-lsp-signature-help' },
+  {
+    src = 'https://github.com/hrsh7th/nvim-cmp',
+    config = function()
+      local cmp = require 'cmp'
+      local luasnip = require 'luasnip'
+      luasnip.config.setup {}
+
+      cmp.setup {
+        snippet = {
+          expand = function(args)
+            luasnip.lsp_expand(args.body)
+          end,
+        },
+        completion = { completeopt = 'menu,menuone,noinsert' },
+        -- For an understanding of why these mappings were
+        -- chosen, you will need to read `:help ins-completion`
+        --
+        -- No, but seriously. Please read `:help ins-completion`, it is really good!
+        mapping = cmp.mapping.preset.insert {
+          ['<C-n>'] = cmp.mapping.select_next_item(),
+          ['<C-p>'] = cmp.mapping.select_prev_item(),
+          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+          ['<C-f>'] = cmp.mapping.scroll_docs(4),
+          ['<C-y>'] = cmp.mapping.confirm { select = true },
+          ['<C-Space>'] = cmp.mapping.complete {},
+          ['<C-l>'] = cmp.mapping(function()
+            if luasnip.expand_or_locally_jumpable() then
+              luasnip.expand_or_jump()
+            end
+          end, { 'i', 's' }),
+          ['<C-h>'] = cmp.mapping(function()
+            if luasnip.locally_jumpable(-1) then
+              luasnip.jump(-1)
+            end
+          end, { 'i', 's' }),
+        },
+        sources = {
+          {
+            name = 'lazydev',
+            -- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
+            group_index = 0,
+          },
+          { name = 'nvim_lsp' },
+          { name = 'luasnip' },
+          { name = 'path' },
+          { name = 'nvim_lsp_signature_help' },
+        },
+      }
+    end,
+  },
+  {
+    src = 'https://github.com/neovim/nvim-lspconfig',
+    setup = function()
+      vim.lsp.enable { 'lua_ls', 'rust_analyzer' }
+    end,
+  },
+  {
+    src = 'https://github.com/stevearc/conform.nvim',
+    setup = function()
+      require('conform').setup {
+        format_on_save = {
+          timeout_ms = 500,
+          lsp_fallback = true,
+        },
+        formatters_by_ft = {
+          lua = { 'stylua' },
+        },
+      }
+    end,
+  },
+  {
+    src = 'https://github.com/mfussenegger/nvim-lint',
+    setup = function()
+      local lint_augroup = vim.api.nvim_create_augroup('lint', { clear = true })
+      vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost', 'InsertLeave' }, {
+        group = lint_augroup,
+        callback = function()
+          -- Only run the linter in buffers that you can modify in order to
+          -- avoid superfluous noise, notably within the handy LSP pop-ups that
+          -- describe the hovered symbol using Markdown.
+          if vim.opt_local.modifiable:get() then
+            require('lint').try_lint()
+          end
+        end,
+      })
+    end,
+  },
+  {
+    src = 'https://github.com/nvim-treesitter/nvim-treesitter',
+    build = ':TSUpdate',
+    config = function()
+      require('nvim-treesitter').install {
+        'bash',
+        'diff',
+        'lua',
+        'luadoc',
+        'markdown',
+        'markdown_inline',
+        'vim',
+        'vimdoc',
+        'rust',
+        'cpp',
+        'python',
+      }
+    end,
+  },
+  {
+    src = 'https://github.com/nvim-treesitter/nvim-treesitter-context',
+  },
+  {
+    src = 'https://github.com/nvim-lua/plenary.nvim',
+  },
+  {
+    src = 'https://github.com/nvim-telescope/telescope.nvim',
+    config = function()
+      require('telescope').setup {
+        extensions = {
+          ['ui-select'] = {
+            require('telescope.themes').get_dropdown(),
+          },
+        },
+      }
+
+      pcall(require('telescope').load_extension, 'fzf')
+      pcall(require('telescope').load_extension, 'ui-select')
+      pcall(require('telescope').load_extension, 'live_grep_args')
+
+      local builtin = require 'telescope.builtin'
+      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = 'Telescope find files' })
+      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = 'Telescope live grep' })
+      vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
+      vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ( for repeat)' })
+      vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
+      vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Telescope help tags' })
+      vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
+      vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
+      vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = 'Telescope buffers' })
+
+      vim.keymap.set('n', '<leader>sa', function()
+        require('telescope').extensions.live_grep_args.live_grep_args()
+      end, { desc = '[S]earch by Grep [A]rgs' })
+
+      vim.keymap.set('n', '<leader>fh', function()
+        require('telescope').extensions.file_browser.file_browser { path = '%:p:h' }
+      end, { desc = 'Open [F]ile browser [H]ere' })
+
+      -- Slightly advanced example of overriding default behavior and theme
+      vim.keymap.set('n', '<leader>/', function()
+        -- You can pass additional configuration to Telescope to change the theme, layout, etc.
+        builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
+          winblend = 10,
+          previewer = false,
+        })
+      end, { desc = '[/] Fuzzily search in current buffer' })
+
+      -- It's also possible to pass additional configuration options.
+      --  See `:help telescope.builtin.live_grep()` for information about particular keys
+      vim.keymap.set('n', '<leader>s/', function()
+        builtin.live_grep {
+          grep_open_files = true,
+          prompt_title = 'Live Grep in Open Files',
+        }
+      end, { desc = '[S]earch [/] in Open Files' })
+
+      -- Shortcut for searching your Neovim configuration files
+      vim.keymap.set('n', '<leader>sn', function()
+        builtin.find_files { cwd = vim.fn.stdpath 'config' }
+      end, { desc = '[S]earch [N]eovim files' })
+
+      require('telescope').load_extension 'file_browser'
+
+      vim.keymap.set('n', '<leader>fb', function()
+        require('telescope').extensions.file_browser.file_browser()
+      end)
+    end,
+  },
 }
 
-vim.pack.add(vim.tbl_map(
-  function(plugin)
-    return {
-      src = plugin.src,
-      version = plugin.version,
-      build = plugin.build,
-      name = plugin.name,
-    }
-  end, plugins))
+vim.pack.add(vim.tbl_map(function(plugin)
+  return {
+    src = plugin.src,
+    version = plugin.version,
+    build = plugin.build,
+    name = plugin.name,
+  }
+end, plugins))
 
 for _, plugin in ipairs(plugins) do
   _ = plugin.setup and plugin.setup()
 end
-
-require('conform').setup {
-  format_on_save = {
-    timeout_ms = 500,
-    lsp_fallback = true,
-  },
-  formatters_by_ft = {
-    lua = { 'stylua' },
-  },
-}
-
-vim.lsp.enable { 'lua_ls', 'rust_analyzer' }
-vim.keymap.set('n', '<leader>o', '<cmd>LspClangdSwitchSourceHeader<CR>', { desc = 'Switch between header/source for cpp' })
-
-local lint_augroup = vim.api.nvim_create_augroup('lint', { clear = true })
-vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost', 'InsertLeave' }, {
-  group = lint_augroup,
-  callback = function()
-    -- Only run the linter in buffers that you can modify in order to
-    -- avoid superfluous noise, notably within the handy LSP pop-ups that
-    -- describe the hovered symbol using Markdown.
-    if vim.opt_local.modifiable:get() then
-      require('lint').try_lint()
-    end
-  end,
-})
-
-require('telescope').setup {
-  extensions = {
-    ['ui-select'] = {
-      require('telescope.themes').get_dropdown(),
-    },
-  },
-}
-
-pcall(require('telescope').load_extension, 'fzf')
-pcall(require('telescope').load_extension, 'ui-select')
-pcall(require('telescope').load_extension, 'live_grep_args')
-
-local builtin = require 'telescope.builtin'
-vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = 'Telescope find files' })
-vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = 'Telescope live grep' })
-vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ( for repeat)' })
-vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
-vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Telescope help tags' })
-vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
-vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = 'Telescope buffers' })
-
-vim.keymap.set('n', '<leader>sa', function()
-  require('telescope').extensions.live_grep_args.live_grep_args()
-end, { desc = '[S]earch by Grep [A]rgs' })
-
-vim.keymap.set('n', '<leader>fh', function()
-  require('telescope').extensions.file_browser.file_browser { path = '%:p:h' }
-end, { desc = 'Open [F]ile browser [H]ere' })
-
--- Slightly advanced example of overriding default behavior and theme
-vim.keymap.set('n', '<leader>/', function()
-  -- You can pass additional configuration to Telescope to change the theme, layout, etc.
-  builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
-    winblend = 10,
-    previewer = false,
-  })
-end, { desc = '[/] Fuzzily search in current buffer' })
-
--- It's also possible to pass additional configuration options.
---  See `:help telescope.builtin.live_grep()` for information about particular keys
-vim.keymap.set('n', '<leader>s/', function()
-  builtin.live_grep {
-    grep_open_files = true,
-    prompt_title = 'Live Grep in Open Files',
-  }
-end, { desc = '[S]earch [/] in Open Files' })
-
--- Shortcut for searching your Neovim configuration files
-vim.keymap.set('n', '<leader>sn', function()
-  builtin.find_files { cwd = vim.fn.stdpath 'config' }
-end, { desc = '[S]earch [N]eovim files' })
-
-require('telescope').load_extension 'file_browser'
-
-vim.keymap.set('n', '<leader>fb', function()
-  require('telescope').extensions.file_browser.file_browser()
-end)
-
-require('nvim-treesitter').install {
-  'bash',
-  'diff',
-  'lua',
-  'luadoc',
-  'markdown',
-  'markdown_inline',
-  'vim',
-  'vimdoc',
-  'rust',
-  'cpp',
-  'python',
-}
 
 require('nvim-autopairs').setup {}
 local cmp_autopairs = require 'nvim-autopairs.completion.cmp'
