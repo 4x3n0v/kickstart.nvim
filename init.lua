@@ -106,25 +106,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 
 -- PLUGINS
 
-vim.pack.add {
-  {
-    src = 'https://github.com/nvim-telescope/telescope-fzf-native.nvim',
-    build = 'make',
-    cond = function()
-      return vim.fn.executable 'make' == 1
-    end,
-  },
-  { src = 'https://github.com/nvim-telescope/telescope-file-browser.nvim' },
-  { src = 'https://github.com/nvim-telescope/telescope-live-grep-args.nvim', tag = '>1.0.0' },
-
-  { src = 'https://github.com/windwp/nvim-autopairs' },
-  { src = 'https://github.com/nvim-mini/mini.nvim' },
-  { src = 'https://github.com/nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
-  { src = 'https://github.com/tpope/vim-sleuth' },
-  { src = 'https://github.com/lewis6991/gitsigns.nvim' },
-  { src = 'https://github.com/folke/which-key.nvim' },
-}
-
 local plugins = {
   {
     src = 'https://github.com/webhooked/kanso.nvim',
@@ -165,12 +146,15 @@ local plugins = {
   },
   {
     src = 'https://github.com/j-hui/fidget.nvim',
+    setup = function() end,
   },
   {
     src = 'https://github.com/hrsh7th/cmp-nvim-lsp',
+    setup = function() end,
   },
   {
     src = 'https://github.com/saadparwaiz1/cmp_luasnip',
+    setup = function() end,
   },
   {
     src = 'https://github.com/L3MON4D3/LuaSnip',
@@ -184,12 +168,21 @@ local plugins = {
       return 'make install_jsregexp'
     end)(),
   },
-  { src = 'https://github.com/hrsh7th/cmp-nvim-lsp' },
-  { src = 'https://github.com/hrsh7th/cmp-path' },
-  { src = 'https://github.com/hrsh7th/cmp-nvim-lsp-signature-help' },
+  {
+    src = 'https://github.com/hrsh7th/cmp-nvim-lsp',
+    setup = function() end,
+  },
+  {
+    src = 'https://github.com/hrsh7th/cmp-path',
+    setup = function() end,
+  },
+  {
+    src = 'https://github.com/hrsh7th/cmp-nvim-lsp-signature-help',
+    setup = function() end,
+  },
   {
     src = 'https://github.com/hrsh7th/nvim-cmp',
-    config = function()
+    setup = function()
       local cmp = require 'cmp'
       local luasnip = require 'luasnip'
       luasnip.config.setup {}
@@ -277,7 +270,7 @@ local plugins = {
   {
     src = 'https://github.com/nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
-    config = function()
+    setup = function()
       require('nvim-treesitter').install {
         'bash',
         'diff',
@@ -295,13 +288,32 @@ local plugins = {
   },
   {
     src = 'https://github.com/nvim-treesitter/nvim-treesitter-context',
+    setup = function() end,
   },
   {
     src = 'https://github.com/nvim-lua/plenary.nvim',
+    setup = function() end,
+  },
+  {
+    src = 'https://github.com/nvim-telescope/telescope-fzf-native.nvim',
+    build = 'make',
+    cond = function()
+      return vim.fn.executable 'make' == 1
+    end,
+    setup = function() end,
+  },
+  {
+    src = 'https://github.com/nvim-telescope/telescope-file-browser.nvim',
+    setup = function() end,
+  },
+  {
+    src = 'https://github.com/nvim-telescope/telescope-live-grep-args.nvim',
+    tag = '>1.0.0',
+    setup = function() end,
   },
   {
     src = 'https://github.com/nvim-telescope/telescope.nvim',
-    config = function()
+    setup = function()
       require('telescope').setup {
         extensions = {
           ['ui-select'] = {
@@ -313,11 +325,13 @@ local plugins = {
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
       pcall(require('telescope').load_extension, 'live_grep_args')
+      pcall(require('telescope').load_extension 'file_browser')
 
       local builtin = require 'telescope.builtin'
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = 'Telescope find files' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = 'Telescope live grep' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
+      vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ( for repeat)' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = 'Telescope help tags' })
@@ -356,108 +370,129 @@ local plugins = {
         builtin.find_files { cwd = vim.fn.stdpath 'config' }
       end, { desc = '[S]earch [N]eovim files' })
 
-      require('telescope').load_extension 'file_browser'
-
       vim.keymap.set('n', '<leader>fb', function()
         require('telescope').extensions.file_browser.file_browser()
-      end)
+      end, { desc = '[F]ile [B]rowser' })
+    end,
+  },
+  {
+    src = 'https://github.com/windwp/nvim-autopairs',
+    setup = function()
+      require('nvim-autopairs').setup {}
+      local cmp_autopairs = require 'nvim-autopairs.completion.cmp'
+      local cmp = require 'cmp'
+      cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+    end,
+  },
+  {
+    src = 'https://github.com/nvim-mini/mini.nvim',
+    setup = function()
+      require('mini.ai').setup { n_lines = 500 }
+      require('mini.surround').setup()
+      local statusline = require 'mini.statusline'
+      statusline.setup {
+        use_icons = vim.g.have_nerd_font,
+      }
+      statusline.section_location = function()
+        return '%2l:%-2v'
+      end
+    end,
+  },
+  {
+    src = 'https://github.com/nvim-tree/nvim-web-devicons',
+    enabled = vim.g.have_nerd_font,
+  },
+  { src = 'https://github.com/tpope/vim-sleuth' },
+  {
+    src = 'https://github.com/lewis6991/gitsigns.nvim',
+    setup = function()
+      require('gitsigns').setup {
+        signs = {
+          add = { text = '+' },
+          change = { text = '~' },
+          delete = { text = '_' },
+          topdelete = { text = '‾' },
+          changedelete = { text = '~' },
+        },
+      }
+    end,
+  },
+  {
+    src = 'https://github.com/folke/which-key.nvim',
+    setup = function()
+      require('which-key').setup {
+        event = 'VimEnter', -- Sets the loading event to 'VimEnter'
+        opts = {
+          -- delay between pressing a key and opening which-key (milliseconds)
+          -- this setting is independent of vim.opt.timeoutlen
+          delay = 0,
+          icons = {
+            -- set icon mappings to true if you have a Nerd Font
+            mappings = vim.g.have_nerd_font,
+            -- If you are using a Nerd Font: set icons.keys to an empty table which will use the
+            -- default which-key.nvim defined Nerd Font icons, otherwise define a string table
+            keys = vim.g.have_nerd_font and {} or {
+              Up = '<Up> ',
+              Down = '<Down> ',
+              Left = '<Left> ',
+              Right = '<Right> ',
+              C = '<C-…> ',
+              M = '<M-…> ',
+              D = '<D-…> ',
+              S = '<S-…> ',
+              CR = '<CR> ',
+              Esc = '<Esc> ',
+              ScrollWheelDown = '<ScrollWheelDown> ',
+              ScrollWheelUp = '<ScrollWheelUp> ',
+              NL = '<NL> ',
+              BS = '<BS> ',
+              Space = '<Space> ',
+              Tab = '<Tab> ',
+              F1 = '<F1>',
+              F2 = '<F2>',
+              F3 = '<F3>',
+              F4 = '<F4>',
+              F5 = '<F5>',
+              F6 = '<F6>',
+              F7 = '<F7>',
+              F8 = '<F8>',
+              F9 = '<F9>',
+              F10 = '<F10>',
+              F11 = '<F11>',
+              F12 = '<F12>',
+            },
+          },
+
+          -- Document existing key chains
+          spec = {
+            { '<leader>c', group = '[C]ode', mode = { 'n', 'x' } },
+            { '<leader>d', group = '[D]ocument' },
+            { '<leader>r', group = '[R]ename' },
+            { '<leader>s', group = '[S]earch' },
+            { '<leader>w', group = '[W]orkspace' },
+            { '<leader>t', group = '[T]oggle' },
+            { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+          },
+        },
+      }
     end,
   },
 }
 
 vim.pack.add(vim.tbl_map(function(plugin)
   return {
+    name = plugin.name,
     src = plugin.src,
     version = plugin.version,
+    tag = plugin.tag,
     build = plugin.build,
-    name = plugin.name,
+    enabled = plugin.enabled,
   }
 end, plugins))
 
 for _, plugin in ipairs(plugins) do
   _ = plugin.setup and plugin.setup()
 end
-
-require('nvim-autopairs').setup {}
-local cmp_autopairs = require 'nvim-autopairs.completion.cmp'
-local cmp = require 'cmp'
-cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
-
-require('mini.ai').setup { n_lines = 500 }
-require('mini.surround').setup()
-local statusline = require 'mini.statusline'
-statusline.setup {
-  use_icons = vim.g.have_nerd_font,
-}
-statusline.section_location = function()
-  return '%2l:%-2v'
-end
-
-require('gitsigns').setup {
-  signs = {
-    add = { text = '+' },
-    change = { text = '~' },
-    delete = { text = '_' },
-    topdelete = { text = '‾' },
-    changedelete = { text = '~' },
-  },
-}
-
-require('which-key').setup {
-  event = 'VimEnter', -- Sets the loading event to 'VimEnter'
-  opts = {
-    -- delay between pressing a key and opening which-key (milliseconds)
-    -- this setting is independent of vim.opt.timeoutlen
-    delay = 0,
-    icons = {
-      -- set icon mappings to true if you have a Nerd Font
-      mappings = vim.g.have_nerd_font,
-      -- If you are using a Nerd Font: set icons.keys to an empty table which will use the
-      -- default which-key.nvim defined Nerd Font icons, otherwise define a string table
-      keys = vim.g.have_nerd_font and {} or {
-        Up = '<Up> ',
-        Down = '<Down> ',
-        Left = '<Left> ',
-        Right = '<Right> ',
-        C = '<C-…> ',
-        M = '<M-…> ',
-        D = '<D-…> ',
-        S = '<S-…> ',
-        CR = '<CR> ',
-        Esc = '<Esc> ',
-        ScrollWheelDown = '<ScrollWheelDown> ',
-        ScrollWheelUp = '<ScrollWheelUp> ',
-        NL = '<NL> ',
-        BS = '<BS> ',
-        Space = '<Space> ',
-        Tab = '<Tab> ',
-        F1 = '<F1>',
-        F2 = '<F2>',
-        F3 = '<F3>',
-        F4 = '<F4>',
-        F5 = '<F5>',
-        F6 = '<F6>',
-        F7 = '<F7>',
-        F8 = '<F8>',
-        F9 = '<F9>',
-        F10 = '<F10>',
-        F11 = '<F11>',
-        F12 = '<F12>',
-      },
-    },
-
-    -- Document existing key chains
-    spec = {
-      { '<leader>c', group = '[C]ode', mode = { 'n', 'x' } },
-      { '<leader>d', group = '[D]ocument' },
-      { '<leader>r', group = '[R]ename' },
-      { '<leader>s', group = '[S]earch' },
-      { '<leader>w', group = '[W]orkspace' },
-      { '<leader>t', group = '[T]oggle' },
-      { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
-    },
-  },
-}
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
