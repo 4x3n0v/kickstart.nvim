@@ -104,29 +104,23 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
--- PLUGINS
+-- [[PLUGINS]]
+
+local gh = function(v)
+  return 'https://github.com/' .. v
+end
 
 local plugins = {
   {
-    src = 'https://github.com/webhooked/kanso.nvim',
+    src = gh 'mason-org/mason.nvim',
     setup = function()
-      require('kanso').setup {
-        bold = true,
-        italics = false,
-      }
-      vim.cmd 'colorscheme kanso'
-    end,
-  },
-  {
-    src = 'https://github.com/mason-org/mason.nvim',
-    setup = function()
-      require('mason').setup {}
+      require('mason').setup()
     end,
   },
   {
     src = 'https://github.com/mason-org/mason-lspconfig.nvim',
     setup = function()
-      require('mason-lspconfig').setup {}
+      require('mason-lspconfig').setup()
     end,
   },
   {
@@ -155,7 +149,7 @@ local plugins = {
   {
     src = 'https://github.com/saadparwaiz1/cmp_luasnip',
     setup = function()
-      require('luasnip').setup {}
+      require('luasnip').setup()
     end,
   },
   {
@@ -194,7 +188,7 @@ local plugins = {
     setup = function()
       local cmp = require 'cmp'
       local luasnip = require 'luasnip'
-      luasnip.config.setup {}
+      luasnip.config.setup()
 
       cmp.setup {
         snippet = {
@@ -302,15 +296,14 @@ local plugins = {
         'cpp',
         'python',
       }
-      require('nvim-treesitter').setup {
-        highlight = { enable = true },
-        indent = { enable = true },
-      }
 
       vim.api.nvim_create_autocmd('FileType', {
-        pattern = { '<filetype>' },
-        callback = function()
-          pcall(vim.treesitter.start)
+        pattern = { '*' },
+        callback = function(args)
+          local lang = vim.treesitter.language.get_lang(args.match)
+          if lang and vim.treesitter.language.add(lang) then
+            vim.treesitter.start(args.buf)
+          end
         end,
       })
     end,
@@ -318,6 +311,16 @@ local plugins = {
   {
     src = 'https://github.com/nvim-treesitter/nvim-treesitter-context',
     setup = function() end,
+  },
+  {
+    src = 'https://github.com/webhooked/kanso.nvim',
+    setup = function()
+      require('kanso').setup {
+        bold = true,
+        italics = false,
+      }
+      vim.cmd 'colorscheme kanso'
+    end,
   },
   {
     src = 'https://github.com/nvim-lua/plenary.nvim',
@@ -451,7 +454,7 @@ local plugins = {
   {
     src = 'https://github.com/windwp/nvim-autopairs',
     setup = function()
-      require('nvim-autopairs').setup {}
+      require('nvim-autopairs').setup()
       local cmp_autopairs = require 'nvim-autopairs.completion.cmp'
       local cmp = require 'cmp'
       cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
