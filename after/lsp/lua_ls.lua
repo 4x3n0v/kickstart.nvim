@@ -1,9 +1,8 @@
----@type vim.lsp.Config
 return {
+  capabilities = require('cmp_nvim_lsp').default_capabilities(),
   cmd = { 'lua-language-server' },
   root_markers = { { '.luarc.json', '.luarc.jsonc' }, '.git' },
   filetypes = { 'lua' },
-  ---@type lspconfig.settings.lua_ls
   settings = {
     Lua = {
       runtime = {
