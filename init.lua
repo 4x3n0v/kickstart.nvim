@@ -409,7 +409,7 @@ local plugins = {
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
-          vim.keymap.set('n', 'gd', require('telescope.builtin').lsp_definitions, {
+          vim.keymap.set('n', 'gd', vim.lsp.buf.definition, {
             buffer = event.buf,
             desc = '[G]o to [D]efinition',
           })
