@@ -251,63 +251,6 @@ local plugins = {
     src = 'https://github.com/neovim/nvim-lspconfig',
     setup = function()
       vim.lsp.enable { 'lua_ls', 'rust_analyzer', 'clangd' }
-      vim.api.nvim_create_autocmd('LspAttach', {
-        group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
-        callback = function(event)
-          local map = function(keys, func, desc, mode)
-            mode = mode or 'n'
-            vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
-          end
-          map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
-          map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-          map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
-          map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
-          map('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-          map('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
-          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
-          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction', { 'n', 'x' })
-          map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-
-          -- The following two autocommands are used to highlight references of the
-          -- word under your cursor when your cursor rests there for a little while.
-          --    See `:help CursorHold` for information about when this is executed
-          --
-          -- When you move your cursor, the highlights will be cleared (the second autocommand).
-          local client = vim.lsp.get_client_by_id(event.data.client_id)
-          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, event.buf) then
-            local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
-            vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
-              buffer = event.buf,
-              group = highlight_augroup,
-              callback = vim.lsp.buf.document_highlight,
-            })
-
-            vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-              buffer = event.buf,
-              group = highlight_augroup,
-              callback = vim.lsp.buf.clear_references,
-            })
-
-            vim.api.nvim_create_autocmd('LspDetach', {
-              group = vim.api.nvim_create_augroup('kickstart-lsp-detach', { clear = true }),
-              callback = function(event2)
-                vim.lsp.buf.clear_references()
-                vim.api.nvim_clear_autocmds { group = 'kickstart-lsp-highlight', buffer = event2.buf }
-              end,
-            })
-          end
-
-          -- The following code creates a keymap to toggle inlay hints in your
-          -- code, if the language server you are using supports them
-          --
-          -- This may be unwanted, since they displace some of your code
-          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
-            map('<leader>th', function()
-              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
-            end, '[T]oggle Inlay [H]ints')
-          end
-        end,
-      })
     end,
   },
   {
@@ -348,7 +291,6 @@ local plugins = {
     version = 'main',
     build = ':TSUpdate',
     setup = function()
-      require('nvim-treesitter').setup {}
       require('nvim-treesitter').install {
         'bash',
         'diff',
@@ -361,6 +303,10 @@ local plugins = {
         'rust',
         'cpp',
         'python',
+      }
+      require('nvim-treesitter').setup {
+        highlight = { enable = true },
+        indent = { enable = true },
       }
 
       vim.api.nvim_create_autocmd('FileType', {
@@ -458,6 +404,50 @@ local plugins = {
       vim.keymap.set('n', '<leader>fb', function()
         require('telescope').extensions.file_browser.file_browser()
       end, { desc = '[F]ile [B]rowser' })
+
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
+        callback = function(event)
+          -- The following two autocommands are used to highlight references of the
+          -- word under your cursor when your cursor rests there for a little while.
+          --    See `:help CursorHold` for information about when this is executed
+          --
+          -- When you move your cursor, the highli-- Find references for the word under your cursor.
+          local client = vim.lsp.get_client_by_id(event.data.client_id)
+          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, event.buf) then
+            local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
+            vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+              buffer = event.buf,
+              group = highlight_augroup,
+              callback = vim.lsp.buf.document_highlight,
+            })
+
+            vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+              buffer = event.buf,
+              group = highlight_augroup,
+              callback = vim.lsp.buf.clear_references,
+            })
+
+            vim.api.nvim_create_autocmd('LspDetach', {
+              group = vim.api.nvim_create_augroup('kickstart-lsp-detach', { clear = true }),
+              callback = function(event2)
+                vim.lsp.buf.clear_references()
+                vim.api.nvim_clear_autocmds { group = 'kickstart-lsp-highlight', buffer = event2.buf }
+              end,
+            })
+          end
+
+          -- The following code creates a keymap to toggle inlay hints in your
+          -- code, if the language server you are using supports them
+          --
+          -- This may be unwanted, since they displace some of your code
+          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
+            vim.keymap.set('n', '<leader>th', function()
+              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
+            end, { desc = '[T]oggle Inlay [H]ints' })
+          end
+        end,
+      })
     end,
   },
   {
@@ -516,47 +506,14 @@ local plugins = {
             mappings = vim.g.have_nerd_font,
             -- If you are using a Nerd Font: set icons.keys to an empty table which will use the
             -- default which-key.nvim defined Nerd Font icons, otherwise define a string table
-            keys = vim.g.have_nerd_font and {} or {
-              Up = '<Up> ',
-              Down = '<Down> ',
-              Left = '<Left> ',
-              Right = '<Right> ',
-              C = '<C-…> ',
-              M = '<M-…> ',
-              D = '<D-…> ',
-              S = '<S-…> ',
-              CR = '<CR> ',
-              Esc = '<Esc> ',
-              ScrollWheelDown = '<ScrollWheelDown> ',
-              ScrollWheelUp = '<ScrollWheelUp> ',
-              NL = '<NL> ',
-              BS = '<BS> ',
-              Space = '<Space> ',
-              Tab = '<Tab> ',
-              F1 = '<F1>',
-              F2 = '<F2>',
-              F3 = '<F3>',
-              F4 = '<F4>',
-              F5 = '<F5>',
-              F6 = '<F6>',
-              F7 = '<F7>',
-              F8 = '<F8>',
-              F9 = '<F9>',
-              F10 = '<F10>',
-              F11 = '<F11>',
-              F12 = '<F12>',
-            },
           },
 
           -- Document existing key chains
           spec = {
-            { '<leader>c', group = '[C]ode', mode = { 'n', 'x' } },
-            { '<leader>d', group = '[D]ocument' },
-            { '<leader>r', group = '[R]ename' },
-            { '<leader>s', group = '[S]earch' },
-            { '<leader>w', group = '[W]orkspace' },
+            { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
             { '<leader>t', group = '[T]oggle' },
             { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+            { 'gr', group = 'LSP Actions', mode = { 'n' } },
           },
         },
       }
